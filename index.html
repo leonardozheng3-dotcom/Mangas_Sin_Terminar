@@ -1,10 +1,295 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Mi primera página</title>
+<meta charset="UTF-8">
+<title>Mangas Sin Terminar PRO</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #111;
+    color: white;
+}
+
+/* HEADER */
+header {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: #1f1f1f;
+}
+
+.menu-btn { font-size: 26px; cursor: pointer; }
+
+/* GRID HOME */
+.container {
+    padding: 20px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
+    gap: 15px;
+}
+
+.card {
+    background: #1a1a1a;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.card img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+}
+
+.card h3 {
+    padding: 10px;
+}
+
+/* LECTOR */
+#reader {
+    display: none;
+    padding: 20px;
+}
+
+#reader img {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+/* ADMIN */
+#admin {
+    display: none;
+    padding: 20px;
+}
+
+.section {
+    background: #1f1f1f;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+}
+
+input, button {
+    padding: 10px;
+    margin: 5px;
+}
+
+/* LOGIN */
+#login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login-box {
+    background: #1f1f1f;
+    padding: 20px;
+    border-radius: 10px;
+}
+</style>
 </head>
+
 <body>
-  <h1>¡Hola mundo!</h1>
-  <p>Mi página en GitHub Pages funciona 🎉</p>
+
+<!-- LOGIN -->
+<div id="login">
+    <div class="login-box">
+        <h2>Login Admin</h2>
+        <input id="email" placeholder="Email">
+        <input id="pass" type="password" placeholder="Password">
+        <button onclick="login()">Entrar</button>
+    </div>
+</div>
+
+<!-- HOME -->
+<div id="home" class="container">
+    <header>
+        <h3>Mangas Sin Terminar</h3>
+        <button onclick="openAdmin()">Admin</button>
+    </header>
+
+    <div id="grid" class="grid"></div>
+</div>
+
+<!-- LECTOR -->
+<div id="reader">
+    <button onclick="back()">⬅ Volver</button>
+    <h2 id="title"></h2>
+    <div id="chapters"></div>
+    <div id="pages"></div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin">
+
+    <h2>Panel Admin</h2>
+    <button onclick="logout()">Salir</button>
+
+    <div class="section">
+        <h3>Agregar Manga</h3>
+        <input id="mangaName" placeholder="Nombre">
+        <input id="mangaImg" placeholder="Imagen URL">
+        <button onclick="addManga()">Guardar</button>
+    </div>
+
+    <div class="section">
+        <h3>Agregar Capítulo</h3>
+        <input id="chapManga" placeholder="Manga">
+        <input id="chapNum" placeholder="Capítulo">
+        <button onclick="addChapter()">Guardar</button>
+    </div>
+
+    <div class="section">
+        <h3>Agregar Página</h3>
+        <input id="pageManga" placeholder="Manga">
+        <input id="pageChap" placeholder="Capítulo">
+        <input id="pageImg" placeholder="Imagen URL">
+        <button onclick="addPage()">Guardar</button>
+    </div>
+
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const firebaseConfig = {
+    apiKey: "TU_API_KEY",
+    authDomain: "TU_AUTH",
+    projectId: "TU_PROJECT_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+/* LOGIN */
+window.login = async function() {
+    const email = document.getElementById("email").value;
+    const pass = document.getElementById("pass").value;
+
+    try {
+        await signInWithEmailAndPassword(auth, email, pass);
+
+        if (email === "TU_ADMIN@gmail.com") {
+            document.getElementById("login").style.display = "none";
+            document.getElementById("admin").style.display = "block";
+        }
+
+    } catch {
+        alert("Error login");
+    }
+}
+
+/* ADMIN */
+window.openAdmin = function() {
+    document.getElementById("home").style.display = "none";
+    document.getElementById("admin").style.display = "block";
+}
+
+window.logout = function() {
+    signOut(auth);
+    location.reload();
+}
+
+/* MANGAS */
+window.addManga = async function() {
+    await addDoc(collection(db, "mangas"), {
+        nombre: mangaName.value,
+        imagen: mangaImg.value
+    });
+
+    loadMangas();
+}
+
+/* CAPÍTULOS */
+window.addChapter = async function() {
+    await addDoc(collection(db, "chapters"), {
+        manga: chapManga.value,
+        numero: chapNum.value
+    });
+}
+
+/* PÁGINAS */
+window.addPage = async function() {
+    await addDoc(collection(db, "pages"), {
+        manga: pageManga.value,
+        chapter: pageChap.value,
+        image: pageImg.value
+    });
+}
+
+/* LOAD HOME */
+async function loadMangas() {
+    const snap = await getDocs(collection(db, "mangas"));
+    const grid = document.getElementById("grid");
+
+    grid.innerHTML = "";
+
+    snap.forEach(doc => {
+        const m = doc.data();
+
+        grid.innerHTML += `
+            <div class="card" onclick="openManga('${m.nombre}')">
+                <img src="${m.imagen}">
+                <h3>${m.nombre}</h3>
+            </div>
+        `;
+    });
+}
+
+window.openManga = async function(name) {
+    document.getElementById("home").style.display = "none";
+    document.getElementById("reader").style.display = "block";
+
+    title.innerText = name;
+
+    const q = query(collection(db, "chapters"), where("manga","==",name));
+    const snap = await getDocs(q);
+
+    chapters.innerHTML = "";
+
+    snap.forEach(c => {
+        chapters.innerHTML += `
+            <button onclick="loadPages('${name}','${c.data().numero}')">
+                Capítulo ${c.data().numero}
+            </button>
+        `;
+    });
+}
+
+window.loadPages = async function(manga, chap) {
+    const q = query(collection(db, "pages"),
+        where("manga","==",manga),
+        where("chapter","==",chap)
+    );
+
+    const snap = await getDocs(q);
+
+    pages.innerHTML = "";
+
+    snap.forEach(p => {
+        pages.innerHTML += `<img src="${p.data().image}">`;
+    });
+}
+
+window.back = function() {
+    document.getElementById("reader").style.display = "none";
+    document.getElementById("home").style.display = "block";
+}
+
+loadMangas();
+
+</script>
+
 </body>
 </html>
