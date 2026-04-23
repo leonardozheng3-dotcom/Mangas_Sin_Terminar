@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #111;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.box {
+    background: #1f1f1f;
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+}
+
+input, button {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+}
+
+button {
+    background: #00ffcc;
+    border: none;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h2>Iniciar sesión</h2>
+
+    <input id="user" placeholder="Usuario">
+    <input id="pass" type="password" placeholder="Contraseña">
+
+    <button onclick="login()">Entrar</button>
+</div>
+
+<script>
+function login() {
+    const user = document.getElementById("user").value;
+    const pass = document.getElementById("pass").value;
+
+    // login temporal (luego lo conectas a Firebase)
+    if(user && pass) {
+        alert("Login correcto");
+        window.location.href = "index.html";
+    } else {
+        alert("Completa los campos");
+    }
+}
+</script>
+
+</body>
+</html>
